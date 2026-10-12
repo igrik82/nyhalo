@@ -1,0 +1,12 @@
+// #FF0000 Red
+// #FFA500 Orange
+// #FFFF00 Yellow
+// #00FF00 Green
+// #0000FF Blue
+// #00FFFF Aqua
+// #00BFFF DeepSkyBlue
+// #FF1493 DeepPink
+// #FF4500 OrangeRed
+// #FF8C00 DarkOrange
+// #FFD700 Gold
+// #FF00FF Fuchsia

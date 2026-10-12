@@ -1,0 +1,30 @@
+idf_component_register(
+    SRCS
+        # "services/blink_service.cpp"
+        "data/telemetry_queue.cpp"
+        "drivers/digital_io.cpp"
+        "drivers/led_driver.cpp"
+        "drivers/rgb_led_driver.cpp"
+        "fsm/status_led_fsm.cpp"
+        "services/heartbeat_service.cpp"
+        "services/sensor_emulator_service.cpp"
+        "services/status_led_service.cpp"
+        "services/telemetry_service.cpp"
+        "app_config.cpp"
+        "app_core.cpp"
+        "app_events.cpp"
+        "main.cpp"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        freertos
+        esp_common
+        esp_system
+        esp_event
+        log
+        nvs_flash
+        esp_timer
+        esp_driver_gpio
+        led_strip
+        esp_driver_rmt
+)
