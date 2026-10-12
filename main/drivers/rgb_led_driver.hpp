@@ -1,46 +1,55 @@
 #pragma once
 
-#include "app_config.hpp"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
+#include <atomic>
+#include <cstdint>
+
 #include "led_strip.h"
 
-namespace app {
-namespace rgb_led_driver {
+namespace app::led_driver {
+
+enum class Mode : uint8_t {
+    OFF,
+    SOLID,  // Постоянное свечение
+    BLINK,  // Жёсткое мигание вкл/выкл
+    PULSE   // Плавное «дыхание»
+};
 
 class RgbLedDriver {
 public:
-    enum class Mode {
-        OFF,    // Выключен
-        SOLID,  // Статичный цвет
-        BLINK   // Мигание
-    };
-
-    RgbLedDriver(gpio_num_t gpio, uint8_t led_count = 1);
+    RgbLedDriver(int gpio, int strip_len);
     ~RgbLedDriver();
 
-    bool init();
+    RgbLedDriver(const RgbLedDriver &) = delete;
+    RgbLedDriver &operator=(const RgbLedDriver &) = delete;
 
-    // Основной метод: задать цвет и режим
-    // color: формат 0xRRGGBB
-    // blink_period_ms: при мигании — длительность фазы «вкл» и «выкл» в мс
-    void setColor(
-        uint32_t color, Mode mode = Mode::SOLID,
-        uint32_t blink_period_ms = app::getConfig().rgb_led.blink_period_ms);
-    void off();
+    bool init();   // только «железо»
+    bool start();  // запуск задачи
+    void stop();
+
+    void setColor(uint8_t r, uint8_t g, uint8_t b);      // потокобезопасно
+    void setMode(Mode mode, uint32_t period_ms = 1000);  // потокобезопасно
 
 private:
     static void task_entry(void *arg);
     void task_loop();
-    void update_hardware(bool on);
+    void update_strip(uint8_t r, uint8_t g, uint8_t b);
 
-    led_strip_handle_t m_strip;
-    TaskHandle_t m_task_handle;
-    Mode m_mode;
-    uint32_t m_color;
-    uint32_t m_blink_period_ticks;
-    bool m_blink_state;
+    int m_gpio;
+    int m_strip_len;
+    led_strip_handle_t m_strip =
+        nullptr;  // RMT-канал больше не храним: им владеет компонент
+    TaskHandle_t m_task_handle = nullptr;
+    bool m_initialized = false;
+    std::atomic<bool> m_running{false};
+
+    std::atomic<Mode> m_mode{Mode::OFF};
+    std::atomic<uint32_t> m_period_ms{1000};
+    std::atomic<uint32_t> m_target_color{0};  // упаковка (R<<16)|(G<<8)|B
+
+    uint32_t m_current_color = 0xFFFFFFFF;  // используется только внутри задачи
 };
 
-}  // namespace rgb_led_driver
-}  // namespace app
+}  // namespace app::led_driver
