@@ -70,6 +70,19 @@ void start() {
 
     events::publish(events::SYSTEM_BOOT, nullptr, 0);
 
+    app::led_driver::RgbLedDriver g_rgb_led(app::board::RGB_LED, 1);
+    g_rgb_led.init();
+    g_rgb_led.start();
+    g_rgb_led.setColor(0, 255, 0);  // Зеленый
+    g_rgb_led.setMode(app::led_driver::Mode::SOLID);
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    g_rgb_led.setColor(0, 0, 255);  // Зеленый
+    g_rgb_led.setMode(app::led_driver::Mode::BLINK);
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    g_rgb_led.setColor(255, 0, 0);  // Красный
+    g_rgb_led.setMode(app::led_driver::Mode::PULSE);
+    vTaskDelay(5000);
+
     ESP_LOGI(TAG, "application started");
 }
 
