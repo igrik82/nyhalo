@@ -87,8 +87,8 @@ bool StatusLedService::start() {
     ESP_LOGI(TAG, "status led service start");
 
     // Начальное состояние: выключен
-    // led_.init();
-    // led_.start();
+    led_.init();
+    led_.start();
     led_.setColor(0, 0, 0);
     led_.setMode(led_driver::Mode::OFF);
 
@@ -148,13 +148,13 @@ void StatusLedService::systemEventHandler(void *arg, esp_event_base_t base,
 void StatusLedService::onSystemBoot() {
     ESP_LOGI(TAG, "system boot: blue pulse");
     led_.setColor(0, 0, 255);  // Синий
-    led_.setMode(led_driver::Mode::SOLID);
+    led_.setMode(led_driver::Mode::SOLID, 500);
 }
 
 void StatusLedService::onHeartbeat() {
     ESP_LOGI(TAG, "system boot: heartbeat pulse");
     led_.setColor(0, 255, 255);  // Синий
-    led_.setMode(led_driver::Mode::SOLID);
+    led_.setMode(led_driver::Mode::SOLID, 500);
 }
 void StatusLedService::onMotionDetected() {
     ESP_LOGI(TAG, "motion detected: green solid");

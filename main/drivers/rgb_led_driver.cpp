@@ -4,6 +4,7 @@
 
 #include <cmath>
 
+#include "../app_config.hpp"
 #include "esp_log.h"
 
 namespace app::led_driver {
@@ -30,8 +31,7 @@ constexpr GammaTable kGamma;
 
 static const char *TAG = "RGB_LED_DRIVER";
 
-RgbLedDriver::RgbLedDriver(gpio_num_t gpio, uint8_t strip_len)
-    : m_gpio(gpio), m_strip_len(strip_len) {}
+RgbLedDriver::RgbLedDriver(gpio_num_t gpio, uint8_t strip_len) : m_gpio(gpio) {}
 
 RgbLedDriver::~RgbLedDriver() {
     stop();
@@ -46,9 +46,10 @@ bool RgbLedDriver::init() {
 
     // led_strip >= 3.0: формата LED_PIXEL_FORMAT_GRB больше нет,
     // используется union led_color_component_format_t + макросы.
+    const auto &config = getConfig();
     led_strip_config_t strip_config = {};
     strip_config.strip_gpio_num = m_gpio;
-    strip_config.max_leds = static_cast<uint32_t>(m_strip_len);
+    strip_config.max_leds = static_cast<uint32_t>(config.rgb_led.led_count);
     strip_config.led_model = LED_MODEL_WS2812;
     strip_config.color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB;
 
