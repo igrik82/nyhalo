@@ -23,6 +23,8 @@ bool StatusLedService::init() {
     // Подписка на прикладные события через свою шину
     EventDispatcher::subscribe(EventType::SYSTEM_BOOT,
                                &StatusLedService::appEventHandler, this);
+    EventDispatcher::subscribe(EventType::HEARTBEAT,
+                               &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::MotionDetected,
     //                            &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::MotionCleared,
@@ -85,7 +87,8 @@ bool StatusLedService::start() {
     ESP_LOGI(TAG, "status led service start");
 
     // Начальное состояние: выключен
-    led_.init();
+    // led_.init();
+    // led_.start();
     led_.setColor(0, 0, 0);
     led_.setMode(led_driver::Mode::OFF);
 
