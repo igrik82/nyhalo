@@ -30,7 +30,7 @@ constexpr GammaTable kGamma;
 
 static const char *TAG = "RGB_LED_DRIVER";
 
-RgbLedDriver::RgbLedDriver(int gpio, int strip_len)
+RgbLedDriver::RgbLedDriver(gpio_num_t gpio, uint8_t strip_len)
     : m_gpio(gpio), m_strip_len(strip_len) {}
 
 RgbLedDriver::~RgbLedDriver() {

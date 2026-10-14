@@ -13,6 +13,8 @@ constexpr led_driver::LedConfig BLINK_LED = {.gpio = GPIO_NUM_19,
 
 // RGB led pin
 constexpr gpio_num_t RGB_LED = GPIO_NUM_13;
+
 // PIR pin
+
 }  // namespace board
 }  // namespace app

@@ -19,7 +19,7 @@ enum class Mode : uint8_t {
 
 class RgbLedDriver {
 public:
-    RgbLedDriver(int gpio, int strip_len);
+    RgbLedDriver(gpio_num_t gpio, uint8_t strip_len);
     ~RgbLedDriver();
 
     RgbLedDriver(const RgbLedDriver &) = delete;

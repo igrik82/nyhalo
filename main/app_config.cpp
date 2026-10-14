@@ -6,18 +6,37 @@ namespace app {
 
 static Config s_config;
 
+// Примерное время ожидание в очереди события
+// Heartbeat 5 мс Не критично, можно пропустить
+// TelemetryUpdated 10 мс Обычная телеметрия, не срочно
+// MotionDetected 20 мс Важное, но не критичное
+// AlertActivated 50 мс Критичное, нельзя терять
+// SystemBoot 100 мс Очень важное, ждём долго
+// ErrorOccurred portMAX_DELAY Критичная ошибка, ждём бесконечно
+
 void initConfig() {
+    // Debug
     s_config.debug.heartbeat_period_ms = 5000;
+    s_config.debug.wait_period_ms = 5;
+
+    // Queue
+    s_config.queue.max_queue_size = 32;
+
+    // Dispatcher
+    s_config.dispatcher.max_subscribers = 32;
 
     // RGB led
     s_config.rgb_led.blink_period_ms = 500;
     s_config.rgb_led.led_count = 1;
 
+    // Telemetry
     s_config.sensors.telemetry_period_ms = 20000;
+    s_config.sensors.wait_period_ms = 10;
 
     // PIR sensor
     s_config.motion.idle_timeout_ms = 8000;
     s_config.motion.renew_period_ms = 5000;
+    s_config.motion.wait_period_ms = 20;
 }
 
 const Config &getConfig() { return s_config; }
