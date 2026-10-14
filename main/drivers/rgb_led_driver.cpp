@@ -75,7 +75,7 @@ bool RgbLedDriver::init() {
 bool RgbLedDriver::start() {
     if (!m_initialized || m_running.load()) return false;
     m_running.store(true);
-    if (xTaskCreate(task_entry, "rgb_led", 2048, this, 5, &m_task_handle) !=
+    if (xTaskCreate(task_entry, "rgb_led", 3072, this, 5, &m_task_handle) !=
         pdPASS) {
         m_running.store(false);
         ESP_LOGE(TAG, "xTaskCreate failed");

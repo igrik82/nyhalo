@@ -104,7 +104,7 @@ void StatusLedService::appEventHandler(const Event &event, void *context) {
             self->onSystemBoot();
             break;
         case EventType::HEARTBEAT:
-            self->onSystemBoot();
+            self->onHeartbeat();
             break;
         case EventType::MOTION_DETECTED:
             self->onMotionDetected();
@@ -148,6 +148,11 @@ void StatusLedService::onSystemBoot() {
     led_.setMode(led_driver::Mode::SOLID);
 }
 
+void StatusLedService::onHeartbeat() {
+    ESP_LOGI(TAG, "system boot: heartbeat pulse");
+    led_.setColor(0, 255, 255);  // Синий
+    led_.setMode(led_driver::Mode::SOLID);
+}
 void StatusLedService::onMotionDetected() {
     ESP_LOGI(TAG, "motion detected: green solid");
     led_.setColor(0, 255, 0);  // Зелёный

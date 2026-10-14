@@ -20,7 +20,7 @@ namespace app {
 
 // Статические экземпляры сервисов
 const auto &config = getConfig();
-const gpio_num_t led = board::RGB_LED;
+// const gpio_num_t led = board::RGB_LED;
 
 // Сначала драйверы (они не зависят от сервисов)
 static led_driver::RgbLedDriver s_rgb_led(board::RGB_LED,

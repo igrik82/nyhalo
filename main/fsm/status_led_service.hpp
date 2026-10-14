@@ -37,6 +37,7 @@ private:
     void onMqttConnected();
     void onMqttDisconnected();
     void onSystemBoot();
+    void onHeartbeat();
 
     led_driver::RgbLedDriver &led_;
     bool initialized_ = false;
