@@ -18,25 +18,28 @@ static const char *TAG = "APP_CORE";
 
 namespace app {
 
-// Статические экземпляры сервисов
-const auto &config = getConfig();
-// const gpio_num_t led = board::RGB_LED;
-
-// Сначала драйверы (они не зависят от сервисов)
-static led_driver::RgbLedDriver s_rgb_led(board::RGB_LED,
-                                          config.rgb_led.led_count);
+// TODO: Рассмотреть применение std::optional
+static led_driver::RgbLedDriver *s_rgb_led = nullptr;
+static StatusLedService *s_status_led_service = nullptr;
 
 // static data::TelemetryQueue s_telemetry_queue;
 static HeartbeatService s_heartbeat_service;
 // static TelemetryService s_telemetry_service(s_telemetry_queue);
 // static SensorEmulatorService s_sensor_emulator_service(s_telemetry_queue);
 // static StatusLedService s_status_led_service(led_driver::RgbLedDriver(led));
-static StatusLedService s_status_led_service(s_rgb_led);
 
 bool init() {
     ESP_LOGI(TAG, "application init");
 
     initConfig();
+    const Config &config = getConfig();
+
+    // Создание объекта драйвера светодиодов
+    static led_driver::RgbLedDriver rgb_led(
+        board::RGB_LED, static_cast<uint32_t>(config.rgb_led.led_count));
+    static StatusLedService status_led_service(rgb_led);
+    s_rgb_led = &rgb_led;
+    s_status_led_service = &status_led_service;
 
     // Инициализация инфраструктуры событий
     if (!EventBus::init()) {
@@ -71,7 +74,7 @@ bool init() {
     //     return false;
     // }
 
-    if (!s_status_led_service.init()) {
+    if (!s_status_led_service->init()) {
         ESP_LOGE(TAG, "failed to init status led service");
         return false;
     }
@@ -98,7 +101,7 @@ void start() {
     s_heartbeat_service.start();
     // s_sensor_emulator_service.start();
     // s_telemetry_service.start();
-    s_status_led_service.start();
+    s_status_led_service->start();
 
     // Публикация события загрузки
     Event boot_event{};
