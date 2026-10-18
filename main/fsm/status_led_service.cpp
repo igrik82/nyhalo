@@ -86,11 +86,13 @@ bool StatusLedService::start() {
 
     ESP_LOGI(TAG, "status led service start");
 
+    QueueHandle_t m_cmd_queue =
+        xQueueCreate(10, sizeof(led_driver::RgbLedCommand));
     // Начальное состояние: выключен
-    led_.init();
+    led_.init(m_cmd_queue);
     led_.start();
-    led_.setColor(0, 0, 0);
-    led_.setMode(led_driver::Mode::OFF);
+    // led_.setColor(0, 0, 0);
+    // led_.setMode(led_driver::Mode::OFF);
 
     return true;
 }
@@ -128,7 +130,7 @@ void StatusLedService::appEventHandler(const Event &event, void *context) {
 
 void StatusLedService::systemEventHandler(void *arg, esp_event_base_t base,
                                           int32_t id, void *data) {
-    StatusLedService *self = static_cast<StatusLedService *>(arg);
+    // StatusLedService *self = static_cast<StatusLedService *>(arg);
 
     // if (base == WIFI_EVENT) {
     //     if (id == WIFI_EVENT_STA_CONNECTED) {
@@ -146,15 +148,17 @@ void StatusLedService::systemEventHandler(void *arg, esp_event_base_t base,
 }
 
 void StatusLedService::onSystemBoot() {
-    ESP_LOGI(TAG, "system boot: blue pulse");
-    led_.setColor(0, 0, 255);  // Синий
-    led_.setMode(led_driver::Mode::SOLID, 500);
+    ESP_LOGD(TAG, "system boot: blue pulse");
+    led_.sendCommand(led_driver::Mode::SOLID, 20, 170, 230, 10000, true);
+    // led_.setColor(20, 170, 230);                        // Light blue
+    // led_.setMode(led_driver::Mode::SOLID, 1000, true);  // urgent true
 }
 
 void StatusLedService::onHeartbeat() {
-    ESP_LOGI(TAG, "system boot: heartbeat pulse");
-    led_.setColor(0, 255, 255);  // Синий
-    led_.setMode(led_driver::Mode::SOLID, 500);
+    ESP_LOGD(TAG, "system boot: heartbeat pulse");
+    led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 255, 1000, false);
+    // led_.setColor(0, 255, 255);  // Синий
+    // led_.setMode(led_driver::Mode::FADE_DOWN, 1000, false);
 }
 void StatusLedService::onMotionDetected() {
     ESP_LOGI(TAG, "motion detected: green solid");
@@ -171,7 +175,7 @@ void StatusLedService::onMotionCleared() {
 void StatusLedService::onAlertActivated() {
     ESP_LOGW(TAG, "alert activated: red blink");
     led_.setColor(255, 0, 0);  // Красный
-    led_.setMode(led_driver::Mode::BLINK, 500);
+                               // led_.setMode(led_driver::Mode::BLINK, 500);
 }
 
 void StatusLedService::onAlertCleared() {
@@ -189,19 +193,19 @@ void StatusLedService::onWifiConnected() {
 void StatusLedService::onWifiDisconnected() {
     ESP_LOGW(TAG, "wifi disconnected: yellow blink");
     led_.setColor(255, 255, 0);  // Жёлтый
-    led_.setMode(led_driver::Mode::BLINK, 1000);
+                                 // led_.setMode(led_driver::Mode::BLINK, 1000);
 }
 
 void StatusLedService::onMqttConnected() {
     ESP_LOGI(TAG, "mqtt connected: green pulse");
     led_.setColor(0, 255, 0);  // Зелёный
-    led_.setMode(led_driver::Mode::PULSE, 3000);
+                               // led_.setMode(led_driver::Mode::PULSE, 3000);
 }
 
 void StatusLedService::onMqttDisconnected() {
     ESP_LOGW(TAG, "mqtt disconnected: orange blink");
     led_.setColor(255, 165, 0);  // Оранжевый
-    led_.setMode(led_driver::Mode::BLINK, 800);
+                                 // led_.setMode(led_driver::Mode::BLINK, 800);
 }
 
 }  // namespace app
