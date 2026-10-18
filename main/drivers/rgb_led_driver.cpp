@@ -2,36 +2,18 @@
 
 #include <driver/rmt_tx.h>
 
-#include <cmath>
+#include <cstdint>
 
 #include "../app_config.hpp"
 #include "esp_log.h"
+#include "freertos/projdefs.h"
 
 namespace app::led_driver {
-namespace {
-
-constexpr uint32_t kTickMs = 10;  // шаг анимации, мс
-
-// Гамма-таблица (~gamma 2.0), генерируется КОМПИЛЯТОРОМ: ровно 256 элементов,
-// лежит во flash, в рантайме не считается.
-struct GammaTable {
-    uint8_t v[256];
-    constexpr GammaTable() : v{} {
-        for (int i = 0; i < 256; ++i) {
-            const uint32_t g = (i * i + 127) / 255;
-            v[i] = (g < 2) ? 0
-                           : static_cast<uint8_t>(
-                                 g);  // режем 1..2 — это видимое глазом «эхо»
-        }
-    }
-};
-constexpr GammaTable kGamma;
-
-}  // namespace
 
 static const char *TAG = "RGB_LED_DRIVER";
 
-RgbLedDriver::RgbLedDriver(gpio_num_t gpio, uint8_t strip_len) : m_gpio(gpio) {}
+RgbLedDriver::RgbLedDriver(gpio_num_t gpio, uint8_t strip_len)
+    : m_gpio(gpio), m_strip_len(strip_len) {}
 
 RgbLedDriver::~RgbLedDriver() {
     stop();
@@ -41,20 +23,23 @@ RgbLedDriver::~RgbLedDriver() {
     }
 }
 
-bool RgbLedDriver::init() {
+bool RgbLedDriver::init(QueueHandle_t cmd_queue) {
+    m_cmd_queue = cmd_queue;
     if (m_initialized) return true;
 
-    // led_strip >= 3.0: формата LED_PIXEL_FORMAT_GRB больше нет,
+    if (m_cmd_queue == nullptr) {
+        ESP_LOGE(TAG, "Queue is null");
+        return false;
+    }
+
     // используется union led_color_component_format_t + макросы.
-    const auto &config = getConfig();
     led_strip_config_t strip_config = {};
     strip_config.strip_gpio_num = m_gpio;
-    strip_config.max_leds = static_cast<uint32_t>(config.rgb_led.led_count);
+    ESP_LOGD(TAG, "%u %u", m_gpio, m_strip_len);
+    strip_config.max_leds = static_cast<uint32_t>(m_strip_len);
     strip_config.led_model = LED_MODEL_WS2812;
     strip_config.color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB;
 
-    // RMT-канал создаётся ВНУТРИ led_strip_new_rmt_device(),
-    // rmt_new_tx_channel() вызывать вручную НЕ нужно.
     led_strip_rmt_config_t rmt_config = {};
     rmt_config.clk_src = RMT_CLK_SRC_DEFAULT;
     rmt_config.resolution_hz = 10 * 1000 * 1000;  // 10 MHz
@@ -75,6 +60,7 @@ bool RgbLedDriver::init() {
 
 bool RgbLedDriver::start() {
     if (!m_initialized || m_running.load()) return false;
+
     m_running.store(true);
     if (xTaskCreate(task_entry, "rgb_led", 3072, this, 5, &m_task_handle) !=
         pdPASS) {
@@ -82,31 +68,44 @@ bool RgbLedDriver::start() {
         ESP_LOGE(TAG, "xTaskCreate failed");
         return false;
     }
+
     ESP_LOGI(TAG, "driver started");
     return true;
 }
 
 void RgbLedDriver::stop() {
     if (m_running.exchange(false)) {
+        // Отправляем команду OFF с urgent, чтобы разбудить задачу
+        sendCommand(Mode::OFF, 0, 0, 0, 0, true);
+
         if (m_task_handle) {
-            vTaskDelete(m_task_handle);
+            vTaskDelay(pdMS_TO_TICKS(100));  // Дать команде время завершиться
             m_task_handle = nullptr;
         }
-        if (m_strip)
-            led_strip_clear(m_strip);  // гасим защёлку после остановки задачи
-        m_current_color = 0;
     }
 }
 
-void RgbLedDriver::setColor(uint8_t r, uint8_t g, uint8_t b) {
-    m_target_color.store(
-        (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | b,
-        std::memory_order_release);
+void RgbLedDriver::sendCommand(Mode mode, uint8_t r, uint8_t g, uint8_t b,
+                               uint32_t period_ms, bool urgent) {
+    if (!m_cmd_queue) return;
+
+    RgbLedCommand cmd = {mode, r, g, b, period_ms, urgent};
+
+    if (urgent) {
+        // Для urgent команды вставляем в начало очереди
+        xQueueSendToFront(m_cmd_queue, &cmd, 0);
+    } else {
+        // Не блокируемся если очередь полна
+        xQueueSendToBack(m_cmd_queue, &cmd, 0);
+    };
 }
 
-void RgbLedDriver::setMode(Mode mode, uint32_t period_ms) {
-    if (period_ms > 0) m_period_ms.store(period_ms, std::memory_order_release);
-    m_mode.store(mode, std::memory_order_release);
+void RgbLedDriver::setColor(uint8_t r, uint8_t g, uint8_t b) {
+    sendCommand(Mode::SOLID, r, g, b, 1000, false);
+}
+
+void RgbLedDriver::setMode(Mode mode, uint32_t period_ms, bool urgent) {
+    sendCommand(mode, 0, 0, 0, period_ms, urgent);
 }
 
 void RgbLedDriver::update_strip(uint8_t r, uint8_t g, uint8_t b) {
@@ -124,78 +123,72 @@ void RgbLedDriver::update_strip(uint8_t r, uint8_t g, uint8_t b) {
     }
 }
 
+void RgbLedDriver::execute_command(const RgbLedCommand &cmd) {
+    const uint8_t tr = cmd.r;
+    const uint8_t tg = cmd.g;
+    const uint8_t tb = cmd.b;
+    const uint32_t period_ms = cmd.period_ms;
+
+    switch (cmd.mode) {
+        case Mode::OFF:
+            update_strip(0, 0, 0);
+            break;
+
+        case Mode::SOLID:
+            update_strip(tr, tg, tb);
+            vTaskDelay(pdMS_TO_TICKS(period_ms));
+            update_strip(0, 0, 0);
+            break;
+
+        case Mode::FADE_DOWN:
+            for (int i = 255; i >= 0; i -= FADE_STEPS) {
+                if (!m_running.load(std::memory_order_acquire)) break;
+
+                const uint8_t r = (tr * i) / 255;
+                const uint8_t g = (tg * i) / 255;
+                const uint8_t b = (tb * i) / 255;
+
+                update_strip(r, g, b);
+                vTaskDelay(pdMS_TO_TICKS(FADE_DELAY_MS));
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(period_ms));
+            update_strip(0, 0, 0);
+            break;
+
+        case Mode::FADE_UP:
+            for (int i = 0; i <= 255; i += FADE_STEPS) {
+                if (!m_running.load(std::memory_order_acquire)) break;
+
+                const uint8_t r = (tr * i) / 255;
+                const uint8_t g = (tg * i) / 255;
+                const uint8_t b = (tb * i) / 255;
+
+                update_strip(r, g, b);
+                vTaskDelay(pdMS_TO_TICKS(FADE_DELAY_MS));
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(period_ms));
+            update_strip(0, 0, 0);
+            break;
+    }
+}
+
 void RgbLedDriver::task_entry(void *arg) {
     static_cast<RgbLedDriver *>(arg)->task_loop();
 }
 
 void RgbLedDriver::task_loop() {
-    constexpr float kPi = 3.14159265359f;
-    TickType_t last_wake = xTaskGetTickCount();
-    Mode prev_mode = m_mode.load(std::memory_order_acquire);
-    uint32_t phase_ms = 0;
+    RgbLedCommand cmd;
 
     while (m_running.load(std::memory_order_acquire)) {
-        const Mode mode = m_mode.load(std::memory_order_acquire);
-        const uint32_t period = m_period_ms.load(std::memory_order_acquire);
-        const uint32_t packed = m_target_color.load(std::memory_order_acquire);
-        const uint8_t tr = static_cast<uint8_t>(packed >> 16);
-        const uint8_t tg = static_cast<uint8_t>(packed >> 8);
-        const uint8_t tb = static_cast<uint8_t>(packed);
-
-        if (mode != prev_mode) {
-            prev_mode = mode;
-            phase_ms = 0;  // новая анимация начинается с нуля
+        if (xQueueReceive(m_cmd_queue, &cmd, portMAX_DELAY) == pdTRUE) {
+            execute_command(cmd);
         }
-
-        switch (mode) {
-            case Mode::OFF:
-                update_strip(0, 0, 0);
-                break;
-
-            case Mode::SOLID:
-                update_strip(tr, tg, tb);
-                break;
-
-            case Mode::BLINK: {
-                phase_ms += kTickMs;
-                if (phase_ms >= period) phase_ms -= period;
-                if (phase_ms < period / 2)
-                    update_strip(tr, tg, tb);
-                else
-                    update_strip(0, 0, 0);
-                break;
-            }
-
-            case Mode::PULSE: {
-                phase_ms += kTickMs;
-                if (phase_ms >= period) phase_ms -= period;
-
-                // 75% периода — «вдох-выдох» (полусинус 0..1..0), 25% —
-                // гарантированная пауза в полной темноте
-                const uint32_t breath_ms = period - period / 4;
-                if (phase_ms < breath_ms) {
-                    const float s =
-                        sinf(kPi * static_cast<float>(phase_ms) /
-                             static_cast<float>(
-                                 breath_ms));  // 0..1..0, без смещения
-                    const uint8_t brightness =
-                        kGamma.v[static_cast<uint8_t>(s * 255.0f)];
-                    const uint8_t r =
-                        static_cast<uint8_t>((tr * brightness + 127) / 255);
-                    const uint8_t g =
-                        static_cast<uint8_t>((tg * brightness + 127) / 255);
-                    const uint8_t b =
-                        static_cast<uint8_t>((tb * brightness + 127) / 255);
-                    update_strip(r, g, b);
-                } else {
-                    update_strip(0, 0, 0);  // явная полная темнота
-                }
-                break;
-            }
-        }
-
-        xTaskDelayUntil(&last_wake, pdMS_TO_TICKS(kTickMs));
     }
+
+    // Финальная очистка
+    update_strip(0, 0, 0);
     vTaskDelete(nullptr);
 }
 
