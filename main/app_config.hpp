@@ -37,6 +37,8 @@ struct Config {
     struct {
         uint32_t blink_period_ms;
         uint8_t led_count;
+        uint8_t fade_step;
+        uint32_t fade_delay_ticks;
     } rgb_led;
 };
 

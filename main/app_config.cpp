@@ -28,6 +28,8 @@ void initConfig() {
     // RGB led
     s_config.rgb_led.blink_period_ms = 500;
     s_config.rgb_led.led_count = 1;
+    s_config.rgb_led.fade_step = 3;
+    s_config.rgb_led.fade_delay_ticks = 30;
 
     // Telemetry
     s_config.sensors.telemetry_period_ms = 20000;
