@@ -41,6 +41,7 @@ private:
     void onHeartbeat();
 
     led_driver::RgbLedDriver &led_;
+    bool m_motion_active = false;
     bool initialized_ = false;
 };
 

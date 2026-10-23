@@ -29,8 +29,6 @@ bool StatusLedService::init() {
                                &StatusLedService::appEventHandler, this);
     EventDispatcher::subscribe(EventType::MOTION_CLEARED,
                                &StatusLedService::appEventHandler, this);
-    EventDispatcher::subscribe(EventType::MOTION,
-                               &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::AlertActivated,
     //                            &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::AlertCleared,
@@ -113,9 +111,6 @@ void StatusLedService::appEventHandler(const Event &event, void *context) {
         case EventType::HEARTBEAT:
             self->onHeartbeat();
             break;
-        case EventType::MOTION:
-            self->onMotion();
-            break;
         case EventType::MOTION_DETECTED:
             self->onMotionDetected();
             break;
@@ -154,27 +149,30 @@ void StatusLedService::systemEventHandler(void *arg, esp_event_base_t base,
 
 void StatusLedService::onSystemBoot() {
     ESP_LOGD(TAG, "system boot: blue pulse");
-    led_.sendCommand(led_driver::Mode::SOLID, 20, 170, 230, 10000, true);
-    // led_.setColor(20, 170, 230);                        // Light blue
-    // led_.setMode(led_driver::Mode::SOLID, 1000, true);  // urgent true
+    led_.sendCommand(led_driver::Mode::SOLID, 20, 170, 230, 100, true);
 }
 
 void StatusLedService::onHeartbeat() {
+    // Не прерывать пока фиксируется движение
+    if (m_motion_active) {
+        return;
+    }
     ESP_LOGD(TAG, "system boot: heartbeat pulse");
     led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 255, 100, false);
-    // led_.setColor(0, 255, 255);  // Синий
-    // led_.setMode(led_driver::Mode::FADE_DOWN, 1000, false);
 }
-void StatusLedService::onMotion() {
-    ESP_LOGI(TAG, "motion detected: green fade");
-    led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 0, 1000, false);
-}
+
 void StatusLedService::onMotionDetected() {
-    ESP_LOGI(TAG, "motion detected: green solid");
+    ESP_LOGI(TAG, "motion detected: yellow blink");
+    m_motion_active = true;
+
+    led_.sendCommand(led_driver::Mode::BLINK_PERIODIC, 255, 128, 0, 1500,
+                     false);
 }
 
 void StatusLedService::onMotionCleared() {
     ESP_LOGI(TAG, "motion cleared: off");
+    m_motion_active = false;
+    led_.sendCommand(led_driver::Mode::OFF, 0, 0, 0, 0, true);
 }
 
 void StatusLedService::onAlertActivated() {

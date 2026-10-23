@@ -100,14 +100,6 @@ void RgbLedDriver::sendCommand(Mode mode, uint8_t r, uint8_t g, uint8_t b,
     };
 }
 
-// void RgbLedDriver::setColor(uint8_t r, uint8_t g, uint8_t b) {
-//     sendCommand(Mode::SOLID, r, g, b, 1000, false);
-// }
-
-// void RgbLedDriver::setMode(Mode mode, uint32_t period_ms, bool urgent) {
-//     sendCommand(mode, 0, 0, 0, period_ms, urgent);
-// }
-
 void RgbLedDriver::update_strip(uint8_t r, uint8_t g, uint8_t b) {
     const uint32_t packed =
         (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | b;
@@ -171,6 +163,24 @@ void RgbLedDriver::execute_command(const RgbLedCommand &cmd) {
             break;
 
         case Mode::BLINK_PERIODIC:
+            const TickType_t half_period = pdMS_TO_TICKS(period_ms / 2);
+            if (half_period == 0) break;  // Защита от деления на 0
+
+            RgbLedCommand peek_cmd;
+            // Крутим цикл, пока не поступит новая команда в очередь или задача
+            // не остановится
+            while (m_running.load(std::memory_order_acquire)) {
+                update_strip(tr, tg, tb);
+                // Ждём половину периода. Если пришла новая команда - выходим.
+                if (xQueuePeek(m_cmd_queue, &peek_cmd, half_period) == pdTRUE)
+                    break;
+                if (!m_running.load(std::memory_order_acquire)) break;
+
+                update_strip(0, 0, 0);
+                // Ждём вторую половину периода.
+                if (xQueuePeek(m_cmd_queue, &peek_cmd, half_period) == pdTRUE)
+                    break;
+            }
             break;
     }
 }

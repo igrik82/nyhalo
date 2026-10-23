@@ -27,6 +27,7 @@ private:
 
     uint32_t m_idle_timeout_ms;
     uint32_t m_wait_period_ms;
+    uint32_t m_debounce_timeout_ms;
 
     QueueHandle_t m_raw_data_queue = nullptr;
     TaskHandle_t m_task_handle = nullptr;

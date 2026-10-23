@@ -36,8 +36,8 @@ void initConfig() {
     s_config.sensors.wait_period_ms = 10;
 
     // PIR sensor
-    s_config.motion.idle_timeout_ms = 8000;
-    s_config.motion.renew_period_ms = 5000;
+    s_config.motion.idle_timeout_ms = 20000;
+    s_config.motion.debounce_timeout_ms = 200;
     s_config.motion.wait_period_ms = 20;
     s_config.motion.queue_lenght = 10;
 }

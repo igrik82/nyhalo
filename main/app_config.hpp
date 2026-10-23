@@ -39,8 +39,8 @@ struct Config {
     // PIR
     struct {
         uint32_t idle_timeout_ms;
-        uint32_t renew_period_ms;
-        uint32_t wait_period_ms;  // Ожидание события в очереди
+        uint32_t debounce_timeout_ms;  // Игнорирование дребезга
+        uint32_t wait_period_ms;       // Ожидание события в очереди
         uint8_t queue_lenght;
     } motion;
 

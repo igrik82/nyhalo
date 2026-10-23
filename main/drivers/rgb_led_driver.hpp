@@ -25,8 +25,8 @@ enum class Mode : uint8_t {
 struct RgbLedCommand {
     Mode mode;
     uint8_t r, g, b;
-    uint32_t period_ms;
-    bool urgent;  // Если true, то команда вставляется в начало очереди
+    uint32_t period_ms;  // Для BLINK_PERIODIC: интервал между вспышками
+    bool urgent;         // Если true, то команда вставляется в начало очереди
 };
 
 class RgbLedDriver {
@@ -44,10 +44,6 @@ public:
     // Методы для отправки команд (потокобезопасно)
     void sendCommand(Mode mode, uint8_t r, uint8_t g, uint8_t b,
                      uint32_t period_ms = 1000, bool urgent = false);
-
-    // void setColor(uint8_t r, uint8_t g, uint8_t b);  // потокобезопасно
-    // void setMode(Mode mode, uint32_t period_ms = 1000,
-    //              bool urgent = false);  // потокобезопасно
 
 private:
     static void task_entry(void *arg);
