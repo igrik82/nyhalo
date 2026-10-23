@@ -18,6 +18,7 @@ enum class EventType : uint16_t {
     MQTT_DISCONNECTED,
 
     // Датчики и телеметрия
+    MOTION,
     MOTION_DETECTED,
     MOTION_CLEARED,
     TELEMETRY_UPDATED,

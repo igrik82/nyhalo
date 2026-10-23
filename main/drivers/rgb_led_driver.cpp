@@ -100,13 +100,13 @@ void RgbLedDriver::sendCommand(Mode mode, uint8_t r, uint8_t g, uint8_t b,
     };
 }
 
-void RgbLedDriver::setColor(uint8_t r, uint8_t g, uint8_t b) {
-    sendCommand(Mode::SOLID, r, g, b, 1000, false);
-}
+// void RgbLedDriver::setColor(uint8_t r, uint8_t g, uint8_t b) {
+//     sendCommand(Mode::SOLID, r, g, b, 1000, false);
+// }
 
-void RgbLedDriver::setMode(Mode mode, uint32_t period_ms, bool urgent) {
-    sendCommand(mode, 0, 0, 0, period_ms, urgent);
-}
+// void RgbLedDriver::setMode(Mode mode, uint32_t period_ms, bool urgent) {
+//     sendCommand(mode, 0, 0, 0, period_ms, urgent);
+// }
 
 void RgbLedDriver::update_strip(uint8_t r, uint8_t g, uint8_t b) {
     const uint32_t packed =
@@ -152,7 +152,6 @@ void RgbLedDriver::execute_command(const RgbLedCommand &cmd) {
                 vTaskDelay(pdMS_TO_TICKS(FADE_DELAY_MS));
             }
 
-            vTaskDelay(pdMS_TO_TICKS(period_ms));
             update_strip(0, 0, 0);
             break;
 
@@ -168,8 +167,10 @@ void RgbLedDriver::execute_command(const RgbLedCommand &cmd) {
                 vTaskDelay(pdMS_TO_TICKS(FADE_DELAY_MS));
             }
 
-            vTaskDelay(pdMS_TO_TICKS(period_ms));
             update_strip(0, 0, 0);
+            break;
+
+        case Mode::BLINK_PERIODIC:
             break;
     }
 }

@@ -20,6 +20,8 @@ const char *eventTypeToString(EventType type) {
         case EventType::MQTT_DISCONNECTED:
             return "MqttDisconnected";
 
+        case EventType::MOTION:
+            return "TriggeredMotionSensor";
         case EventType::MOTION_DETECTED:
             return "MotionDetected";
         case EventType::MOTION_CLEARED:

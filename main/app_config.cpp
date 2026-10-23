@@ -16,7 +16,7 @@ static Config s_config;
 
 void initConfig() {
     // Debug
-    s_config.debug.heartbeat_period_ms = 5000;
+    s_config.debug.heartbeat_period_ms = 50000;
     s_config.debug.wait_period_ms = 5;
 
     // Queue
@@ -39,6 +39,7 @@ void initConfig() {
     s_config.motion.idle_timeout_ms = 8000;
     s_config.motion.renew_period_ms = 5000;
     s_config.motion.wait_period_ms = 20;
+    s_config.motion.queue_lenght = 10;
 }
 
 const Config &getConfig() { return s_config; }

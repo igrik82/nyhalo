@@ -28,6 +28,7 @@ private:
     static void systemEventHandler(void *arg, esp_event_base_t base, int32_t id,
                                    void *data);
 
+    void onMotion();
     void onMotionDetected();
     void onMotionCleared();
     void onAlertActivated();

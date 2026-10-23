@@ -16,9 +16,10 @@ namespace app::led_driver {
 
 enum class Mode : uint8_t {
     OFF,
-    SOLID,      // Постоянное свечение
-    FADE_DOWN,  // Вспышка и плавное затухание
-    FADE_UP,    // Плавное увеличение яркости и выключение
+    SOLID,           // Постоянное свечение
+    FADE_DOWN,       // Вспышка и плавное затухание
+    FADE_UP,         // Плавное увеличение яркости и выключение
+    BLINK_PERIODIC,  // Периодические мигания
 };
 
 struct RgbLedCommand {
@@ -44,9 +45,9 @@ public:
     void sendCommand(Mode mode, uint8_t r, uint8_t g, uint8_t b,
                      uint32_t period_ms = 1000, bool urgent = false);
 
-    void setColor(uint8_t r, uint8_t g, uint8_t b);  // потокобезопасно
-    void setMode(Mode mode, uint32_t period_ms = 1000,
-                 bool urgent = false);  // потокобезопасно
+    // void setColor(uint8_t r, uint8_t g, uint8_t b);  // потокобезопасно
+    // void setMode(Mode mode, uint32_t period_ms = 1000,
+    //              bool urgent = false);  // потокобезопасно
 
 private:
     static void task_entry(void *arg);
@@ -68,10 +69,6 @@ private:
     TaskHandle_t m_task_handle = nullptr;
     bool m_initialized = false;
     std::atomic<bool> m_running{false};
-
-    // std::atomic<Mode> m_mode{Mode::OFF};
-    // std::atomic<uint32_t> m_period_ms{1000};
-    // std::atomic<uint32_t> m_target_color{0};  // упаковка (R<<16)|(G<<8)|B
 
     uint32_t m_current_color = 0xFFFFFFFF;  // используется только внутри задачи
 };

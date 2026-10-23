@@ -4,6 +4,7 @@ idf_component_register(
         "data/telemetry_queue.cpp"
         "drivers/digital_io.cpp"
         #"drivers/led_driver.cpp"
+        "drivers/pir_driver.cpp"
         "drivers/rgb_led_driver.cpp"
         "events/event_bus.cpp"
         "events/event_dispatcher.cpp"
@@ -11,12 +12,14 @@ idf_component_register(
         "events/event_types.cpp"
         "fsm/status_led_service.cpp"
         "services/heartbeat_service.cpp"
+        "services/motion_service.cpp"
         #"services/sensor_emulator_service.cpp"
         #"services/status_led_service.cpp"
         #"services/telemetry_service.cpp"
         "app_config.cpp"
         "app_core.cpp"
         "main.cpp"
+        "static_resources.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES

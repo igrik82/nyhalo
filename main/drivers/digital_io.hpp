@@ -1,5 +1,5 @@
 #pragma once
-#include "soc/gpio_num.h"
+#include "driver/gpio.h"
 
 namespace app {
 namespace io_driver {
@@ -27,8 +27,19 @@ private:
     bool _state = false;
 };
 
-// TODO: Add digital input
-class DigitalInput {};
+// Digital input ISRs
+class DigitalInputISR {
+public:
+    struct Config {
+        gpio_num_t gpio;
+    };
+
+    bool init(gpio_isr_t isr_handler, gpio_num_t gpio);
+
+private:
+    gpio_num_t _gpio = static_cast<gpio_num_t>(-1);
+    bool _initialized = false;
+};
 
 }  // namespace io_driver
 }  // namespace app

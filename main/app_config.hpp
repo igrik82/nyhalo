@@ -4,6 +4,16 @@
 
 namespace app {
 
+// ================================
+// Параметры статических ресурсов
+// ================================
+
+// Размеры очередей
+constexpr size_t MOTION_RAW_QUEUE_LENGTH = 10;
+
+// ================================
+// Параметры динамических ресурсов
+// ================================
 struct Config {
     // Максимальный размер очереди событий
     struct {
@@ -31,6 +41,7 @@ struct Config {
         uint32_t idle_timeout_ms;
         uint32_t renew_period_ms;
         uint32_t wait_period_ms;  // Ожидание события в очереди
+        uint8_t queue_lenght;
     } motion;
 
     // RGB led

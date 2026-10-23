@@ -25,10 +25,12 @@ bool StatusLedService::init() {
                                &StatusLedService::appEventHandler, this);
     EventDispatcher::subscribe(EventType::HEARTBEAT,
                                &StatusLedService::appEventHandler, this);
-    // EventDispatcher::subscribe(EventType::MotionDetected,
-    //                            &StatusLedService::appEventHandler, this);
-    // EventDispatcher::subscribe(EventType::MotionCleared,
-    //                            &StatusLedService::appEventHandler, this);
+    EventDispatcher::subscribe(EventType::MOTION_DETECTED,
+                               &StatusLedService::appEventHandler, this);
+    EventDispatcher::subscribe(EventType::MOTION_CLEARED,
+                               &StatusLedService::appEventHandler, this);
+    EventDispatcher::subscribe(EventType::MOTION,
+                               &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::AlertActivated,
     //                            &StatusLedService::appEventHandler, this);
     // EventDispatcher::subscribe(EventType::AlertCleared,
@@ -111,6 +113,9 @@ void StatusLedService::appEventHandler(const Event &event, void *context) {
         case EventType::HEARTBEAT:
             self->onHeartbeat();
             break;
+        case EventType::MOTION:
+            self->onMotion();
+            break;
         case EventType::MOTION_DETECTED:
             self->onMotionDetected();
             break;
@@ -156,56 +161,42 @@ void StatusLedService::onSystemBoot() {
 
 void StatusLedService::onHeartbeat() {
     ESP_LOGD(TAG, "system boot: heartbeat pulse");
-    led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 255, 1000, false);
+    led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 255, 100, false);
     // led_.setColor(0, 255, 255);  // Синий
     // led_.setMode(led_driver::Mode::FADE_DOWN, 1000, false);
 }
+void StatusLedService::onMotion() {
+    ESP_LOGI(TAG, "motion detected: green fade");
+    led_.sendCommand(led_driver::Mode::FADE_DOWN, 0, 255, 0, 1000, false);
+}
 void StatusLedService::onMotionDetected() {
     ESP_LOGI(TAG, "motion detected: green solid");
-    led_.setColor(0, 255, 0);  // Зелёный
-    led_.setMode(led_driver::Mode::SOLID);
 }
 
 void StatusLedService::onMotionCleared() {
     ESP_LOGI(TAG, "motion cleared: off");
-    led_.setColor(0, 0, 0);
-    led_.setMode(led_driver::Mode::OFF);
 }
 
 void StatusLedService::onAlertActivated() {
     ESP_LOGW(TAG, "alert activated: red blink");
-    led_.setColor(255, 0, 0);  // Красный
-                               // led_.setMode(led_driver::Mode::BLINK, 500);
 }
 
-void StatusLedService::onAlertCleared() {
-    ESP_LOGI(TAG, "alert cleared: off");
-    led_.setColor(0, 0, 0);
-    led_.setMode(led_driver::Mode::OFF);
-}
+void StatusLedService::onAlertCleared() { ESP_LOGI(TAG, "alert cleared: off"); }
 
 void StatusLedService::onWifiConnected() {
     ESP_LOGI(TAG, "wifi connected: cyan solid");
-    led_.setColor(0, 255, 255);  // Циан
-    led_.setMode(led_driver::Mode::SOLID);
 }
 
 void StatusLedService::onWifiDisconnected() {
     ESP_LOGW(TAG, "wifi disconnected: yellow blink");
-    led_.setColor(255, 255, 0);  // Жёлтый
-                                 // led_.setMode(led_driver::Mode::BLINK, 1000);
 }
 
 void StatusLedService::onMqttConnected() {
     ESP_LOGI(TAG, "mqtt connected: green pulse");
-    led_.setColor(0, 255, 0);  // Зелёный
-                               // led_.setMode(led_driver::Mode::PULSE, 3000);
 }
 
 void StatusLedService::onMqttDisconnected() {
     ESP_LOGW(TAG, "mqtt disconnected: orange blink");
-    led_.setColor(255, 165, 0);  // Оранжевый
-                                 // led_.setMode(led_driver::Mode::BLINK, 800);
 }
 
 }  // namespace app
