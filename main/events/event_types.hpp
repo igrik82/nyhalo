@@ -27,6 +27,10 @@ enum class EventType : uint16_t {
     ALERT_ACTIVATED,
     ALERT_CLEARED,
 
+    // NTP сервис
+    TIME_SYNCED,
+    TIME_SYNC_FAILED,
+
     // OTA
     OTA_STARTED,
     OTA_COMPLETED,
@@ -66,6 +70,10 @@ struct Event {
             uint8_t level;
             uint16_t eco2;
         } alert;
+
+        struct TimeEventData {
+            uint64_t timestamp_s;  // Unix-время синхронизации
+        } time;
 
         // ...
 

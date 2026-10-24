@@ -29,6 +29,11 @@ const char *eventTypeToString(EventType type) {
         case EventType::TELEMETRY_UPDATED:
             return "TelemetryUpdated";
 
+        case EventType::TIME_SYNCED:
+            return "TimeSynced";
+        case EventType::TIME_SYNC_FAILED:
+            return "TimeSyncFailed";
+
         case EventType::ALERT_ACTIVATED:
             return "AlertActivated";
         case EventType::ALERT_CLEARED:

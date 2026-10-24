@@ -1,5 +1,7 @@
 #include "app_config.hpp"
 
+#include <cstring>
+
 #include "driver/gpio.h"
 
 namespace app {
@@ -49,6 +51,13 @@ void initConfig() {
     s_config.motion.debounce_timeout_ms = 200;
     s_config.motion.wait_period_ms = 20;
     s_config.motion.queue_lenght = 10;
+
+    // NTP настройки
+    // NTP
+    strcpy(s_config.ntp.server, "pool.ntp.org");
+    strcpy(s_config.ntp.timezone, "YEKT-5");
+    s_config.ntp.sync_check_period_ms = 60000;  // проверяем раз в минуту
+    s_config.ntp.sync_timeout_ms = 30000;  // ждём первую синхронизацию 30 сек
 }
 
 const Config &getConfig() { return s_config; }

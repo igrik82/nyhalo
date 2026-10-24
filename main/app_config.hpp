@@ -62,6 +62,15 @@ struct Config {
         uint8_t fade_step;
         uint32_t fade_delay_ticks;
     } rgb_led;
+
+    // Настройки NTP
+    struct {
+        char server[64];    // NTP-сервер (например, "pool.ntp.org")
+        char timezone[32];  // POSIX-формат (например, "MSK-3" или "UTC-0")
+        uint32_t sync_check_period_ms;  // Период проверки синхронизации
+        uint32_t sync_timeout_ms;       // Максимальное время ожидания первой
+                                        // синхронизации
+    } ntp;
 };
 
 void initConfig();

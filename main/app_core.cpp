@@ -16,6 +16,7 @@
 #include "fsm/status_led_service.hpp"
 // #include "services/telemetry_service.hpp"
 #include "services/motion_service.hpp"
+#include "services/ntp_service.hpp"
 #include "services/wifi_service.hpp"
 #include "static_resources.hpp"
 
@@ -36,6 +37,8 @@ static MotionService *s_motion_service = nullptr;
 // TODO: Читать из NVS
 static constexpr const char *WIFI_SSID = "Wokwi-GUEST";
 static constexpr const char *WIFI_PASSWORD = "";
+
+static NtpService s_ntp_service;
 
 static WifiService *s_wifi_service = nullptr;
 
@@ -105,6 +108,12 @@ bool init() {
         return false;
     }
 
+    // Инициализация сервиса NTP
+    if (!s_ntp_service.init()) {
+        ESP_LOGE(TAG, "failed to init ntp service");
+        return false;
+    }
+
     // // Инициализация очередей данных
     // if (!s_telemetry_queue.init()) {
     //     ESP_LOGE(TAG, "failed to init telemetry queue");
@@ -169,6 +178,12 @@ void start() {
     // Запуск WiFi
     if (!s_wifi_service->start()) {
         ESP_LOGE(TAG, "failed to start WiFi service");
+        return;
+    }
+
+    // Запуск сервиса NTP
+    if (!s_ntp_service.start()) {
+        ESP_LOGE(TAG, "failed to start NTP service");
         return;
     }
 
