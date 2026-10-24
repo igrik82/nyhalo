@@ -25,6 +25,15 @@ void initConfig() {
     // Dispatcher
     s_config.dispatcher.max_subscribers = 32;
 
+    // WiFi
+    s_config.wifi.connect_timeout_ms = 10000;
+    s_config.wifi.reconnect_timeout_ms = 15000;
+    s_config.wifi.max_retries = 10;
+    s_config.wifi.cooldown_ms = 30000;
+    s_config.wifi.task_stack_size = 4096;
+    s_config.wifi.task_priority = 3;
+    s_config.wifi.power_save = false;
+
     // RGB led
     s_config.rgb_led.blink_period_ms = 500;
     s_config.rgb_led.led_count = 1;

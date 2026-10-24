@@ -13,6 +13,7 @@ idf_component_register(
         "fsm/status_led_service.cpp"
         "services/heartbeat_service.cpp"
         "services/motion_service.cpp"
+        "services/wifi_service.cpp"
         #"services/sensor_emulator_service.cpp"
         #"services/status_led_service.cpp"
         #"services/telemetry_service.cpp"
@@ -33,4 +34,6 @@ idf_component_register(
         esp_driver_gpio
         led_strip
         esp_driver_rmt
+        esp_wifi
+        esp_netif
 )

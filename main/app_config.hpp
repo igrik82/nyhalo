@@ -24,6 +24,17 @@ struct Config {
         size_t max_subscribers;
     } dispatcher;
 
+    // WiFi
+    struct {
+        uint32_t connect_timeout_ms;
+        uint32_t reconnect_timeout_ms;
+        uint32_t max_retries;
+        uint32_t cooldown_ms;  // пауза после исчерпания лимита попыток
+        uint16_t task_stack_size;
+        uint8_t task_priority;
+        bool power_save;  // modem sleep;
+    } wifi;
+
     // Периоды обновления событий
     struct {
         uint32_t heartbeat_period_ms;

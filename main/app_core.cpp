@@ -16,6 +16,7 @@
 #include "fsm/status_led_service.hpp"
 // #include "services/telemetry_service.hpp"
 #include "services/motion_service.hpp"
+#include "services/wifi_service.hpp"
 #include "static_resources.hpp"
 
 static const char *TAG = "APP_CORE";
@@ -30,6 +31,13 @@ static StatusLedService *s_status_led_service = nullptr;
 static QueueHandle_t s_motion_raw_queue = nullptr;
 static drivers::PirDriver s_pir_driver(board::PIR_SENSOR);
 static MotionService *s_motion_service = nullptr;
+
+// WiFi настройки
+// TODO: Читать из NVS
+static constexpr const char *WIFI_SSID = "Wokwi-GUEST";
+static constexpr const char *WIFI_PASSWORD = "";
+
+static WifiService *s_wifi_service = nullptr;
 
 // static data::TelemetryQueue s_telemetry_queue;
 static HeartbeatService s_heartbeat_service;
@@ -86,6 +94,14 @@ bool init() {
 
     if (!EventDispatcher::init()) {
         ESP_LOGE(TAG, "failed to init event dispatcher");
+        return false;
+    }
+
+    // Инициализация сервиса WiFi
+    static WifiService wifi_service(WIFI_SSID, WIFI_PASSWORD);
+    s_wifi_service = &wifi_service;
+    if (!s_wifi_service->init()) {
+        ESP_LOGE(TAG, "failed to init wifi service");
         return false;
     }
 
@@ -149,6 +165,12 @@ void start() {
     // s_telemetry_service.start();
     s_status_led_service->start();
     s_motion_service->start();
+
+    // Запуск WiFi
+    if (!s_wifi_service->start()) {
+        ESP_LOGE(TAG, "failed to start WiFi service");
+        return;
+    }
 
     // Публикация события загрузки
     Event boot_event{};
