@@ -15,6 +15,8 @@ idf_component_register(
         "services/motion_service.cpp"
         "services/wifi_service.cpp"
         "services/ntp_service.cpp"
+        "services/mqtt_service.cpp"
+        "services/mdns_service.cpp"
         #"services/sensor_emulator_service.cpp"
         #"services/status_led_service.cpp"
         #"services/telemetry_service.cpp"

@@ -71,6 +71,30 @@ struct Config {
         uint32_t sync_timeout_ms;       // Максимальное время ожидания первой
                                         // синхронизации
     } ntp;
+
+    // MQTT
+    struct {
+        char fallback_host[32];
+        uint16_t fallback_port;
+        uint32_t keepalive_s;
+        uint16_t task_stack_size;
+        uint8_t task_priority;
+        char client_id[16];
+        char topic_motion[32];
+        char topic_telemetry[32];
+        uint32_t wait_period_ms;
+    } mqtt;
+
+    // mDNS
+    struct {
+        char hostname[16];
+        char mqtt_service[16];  // "_mqtt"
+        char mqtt_proto[16];    // "_tcp"
+        uint32_t query_period_ms;
+        uint32_t resolve_timeout_ms;
+        uint16_t task_stack_size;
+        uint8_t task_priority;
+    } mdns;
 };
 
 void initConfig();

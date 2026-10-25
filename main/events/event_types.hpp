@@ -11,11 +11,17 @@ enum class EventType : uint16_t {
     HEARTBEAT,
     ERROR_OCCURRED,
 
-    // Сеть и MQTT
+    // Сеть
     WIFI_CONNECTED,
     WIFI_DISCONNECTED,
+
+    // MQTT
     MQTT_CONNECTED,
     MQTT_DISCONNECTED,
+
+    // mDNS
+    MDNS_MQTT_RESOLVED,
+    MDNS_RESOLVE_FAILED,
 
     // Датчики и телеметрия
     MOTION,
@@ -74,6 +80,11 @@ struct Event {
         struct TimeEventData {
             uint64_t timestamp_s;  // Unix-время синхронизации
         } time;
+
+        struct MdnsEventData {
+            char ip[16];
+            uint16_t port;
+        } mdns;
 
         // ...
 

@@ -15,7 +15,9 @@
 // #include "services/sensor_emulator_service.hpp"
 #include "fsm/status_led_service.hpp"
 // #include "services/telemetry_service.hpp"
+#include "services/mdns_service.hpp"
 #include "services/motion_service.hpp"
+#include "services/mqtt_service.hpp"
 #include "services/ntp_service.hpp"
 #include "services/wifi_service.hpp"
 #include "static_resources.hpp"
@@ -38,9 +40,14 @@ static MotionService *s_motion_service = nullptr;
 static constexpr const char *WIFI_SSID = "Wokwi-GUEST";
 static constexpr const char *WIFI_PASSWORD = "";
 
+// Сервис NTP
 static NtpService s_ntp_service;
-
+// Сервис WiFi
 static WifiService *s_wifi_service = nullptr;
+
+// Сервис mDNS и MQTT
+static MdnsService *s_mdns_service = nullptr;
+static MqttService *s_mqtt_service = nullptr;
 
 // static data::TelemetryQueue s_telemetry_queue;
 static HeartbeatService s_heartbeat_service;
@@ -114,6 +121,22 @@ bool init() {
         return false;
     }
 
+    // mDNS
+    static MdnsService mdns_service("nyhalo", "_mqtt", "_tcp");
+    s_mdns_service = &mdns_service;
+    if (!s_mdns_service->init()) {
+        ESP_LOGE(TAG, "failed to init mdns service");
+        return false;
+    }
+
+    // MQTT
+    static MqttService mqtt_service("test.mosquitto.org", 1883);
+    s_mqtt_service = &mqtt_service;
+    if (!s_mqtt_service->init()) {
+        ESP_LOGE(TAG, "failed to init mqtt service");
+        return false;
+    }
+
     // // Инициализация очередей данных
     // if (!s_telemetry_queue.init()) {
     //     ESP_LOGE(TAG, "failed to init telemetry queue");
@@ -184,6 +207,16 @@ void start() {
     // Запуск сервиса NTP
     if (!s_ntp_service.start()) {
         ESP_LOGE(TAG, "failed to start NTP service");
+        return;
+    }
+
+    if (!s_mdns_service->start()) {
+        ESP_LOGE(TAG, "failed to start MDNS service");
+        return;
+    }
+
+    if (!s_mqtt_service->start()) {
+        ESP_LOGE(TAG, "failed to start MQTT service");
         return;
     }
 
